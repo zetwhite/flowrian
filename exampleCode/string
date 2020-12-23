@@ -1,0 +1,6 @@
+$str::string; 
+$str = "helloworld"; 
+
+$test::string = "good test"; 
+$test::string = "new\nline test"; 
+$tes2::string = "happy \" day"; 
