@@ -1,0 +1,21 @@
+#test::integer, integer -> integer (
+  start $a, $b;
+
+	$c::integer; 
+  delete $gVar;
+  
+	end $c;
+)
+
+#main::void -> integer (
+	start; 
+
+  create $gVar::integer = 20; --글로벌 변수
+	$a, $b :: integer, integer; 
+  $a <- @; 
+  $b <- @; 
+	$c::integer = #test $a, $b; --함수 호출
+  @ <- $c; 
+
+  end 2; 
+)

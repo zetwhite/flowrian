@@ -1,0 +1,28 @@
+
+#main::void->integer (
+	start; 
+
+	if ($a > $b) {
+		$c::integer = $d; 
+	}
+
+	if ($c > 3+4) {
+		$c::integer = $d; 
+	}
+	else{
+		; 
+	}
+
+	create $
+
+	$a <- @; 
+	$sum::integer = 1; 
+	$index::integer = 1; 
+	while ($index < 10){
+		$sum = $sum + $index; 
+		$index = $index + 1; 
+	}
+	@ <- $sum; 
+
+	end 1; 
+)

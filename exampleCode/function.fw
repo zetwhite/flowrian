@@ -1,0 +1,17 @@
+#test::integer, integer -> integer (
+		start $a, $b;
+		$c::integer; 
+		end $c;
+)
+
+#main::void -> integer (
+	start; 
+	$a::integer = 3; 
+	$b::integer = 4; 
+	$c::integer = #test $a, $b; --함수
+	$c::integer = #test $a, $b; --함수호출2 
+	$a, $b :: integer, float; 
+
+	#test $a, $d; 
+	end $c; 
+)

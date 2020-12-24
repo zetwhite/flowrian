@@ -1,6 +1,6 @@
 %{
 	#include "syntaxTreeParser.h"
-	#include "node.h"
+	#include "ast/node.hpp"
 	#include <string.h>
 
 	int line = 1; 
@@ -59,6 +59,8 @@ literal 	\"([^\\\"]|\\.)*\"
 "start"	{ return _START; }
 "end"		{ return _END; }
 
+"create"	{ return _CREATE; }
+"delete" 	{ return _DELETE; }
 
 %%
 

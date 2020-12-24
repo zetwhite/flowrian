@@ -1,5 +1,5 @@
 
-#include "node.h"
+#include "ast.h"
 
 
 void addSon(Node *parent, Node *son)

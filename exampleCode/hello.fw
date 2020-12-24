@@ -1,0 +1,14 @@
+#add::integer, integer -> integer (
+  start $a, $b; 
+  $c::integer = $a + $b; 
+  end $c; 
+)
+
+#main :: void -> integer (
+  start ;
+  $greeting::string = "hello flowrian"; 
+  @ <- $greeting; 
+  $sum = #add 3, 4; 
+  @ <- $sum;  
+  end 1; 
+)
