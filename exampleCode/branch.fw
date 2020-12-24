@@ -10,10 +10,8 @@
 		$c::integer = $d; 
 	}
 	else{
-		; 
+		; 	
 	}
-
-	create $
 
 	$a <- @; 
 	$sum::integer = 1; 

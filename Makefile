@@ -1,19 +1,19 @@
 SHELL = /bin/sh
 
-sources = scanner.c syntaxTreeParser.c ast.h ast.c
-headers = syntaxTreeParser.h ast.h
-
+CC = g++
+CFLAGS = -c
+OBJS = node.o block.o parser.o scanner.o 
 #exvalexpr: $(sources)
 #	g++ -o $@ $(sources) 
 
-flower : block.o node.o syntaxTreeParser.c syntaxTreeParser.h scanner.c 
-	g++ -o syntaxTreeParser.c syntaxTreeParser.h scanner.c 
+flower : $(OBJS)
+	$(CC) -o flower $(OBJS)
 
-node.o : ast/node.hpp ast/node.cpp
-	g++ -c -o $@ $< 
+node.o : ast/node.cpp ast/node.hpp
+	$(CC) $(CFLAGS) -o $@ $< 
 
-block.o : ast/block.cpp ast/block.hpp ast/node.hpp 
-	g++ -c -o $@ $< 
+block.o : ast/block.cpp ast/block.hpp 
+	$(CC) $(CFLAGS) -o $@ $< 
 
 syntaxTreeParser.c : parser.y
 	bison -dy $< -o $@
@@ -24,5 +24,11 @@ syntaxTreeParser.h : parser.y
 scanner.c : scanner.l
 	flex -o $@ $<
 
+scanner.o : scanner.c 
+	$(CC) $(CFLAGS) -o $@ $< 
+
+parser.o : syntaxTreeParser.c syntaxTreeParser.h
+	$(CC) $(CFLAGS) -o $@ $< 
+
 clean :
-	rm syntaxTreeParser.c syntaxTreeParser.h scanner.c exvalexpr.exe
+	rm syntaxTreeParser.c syntaxTreeParser.h scanner.c flower node.o block.o scanner.o parser.o 

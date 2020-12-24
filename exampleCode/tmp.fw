@@ -1,0 +1,13 @@
+
+
+#main::void->integer(
+  start; 
+
+  #test $a, $b, $c;
+
+  #test $a, $b, $c;
+
+  #test $a, $b, $c;
+
+  end 1; 
+)
