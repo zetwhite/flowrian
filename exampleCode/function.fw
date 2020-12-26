@@ -8,10 +8,6 @@
 	start; 
 	$a::integer = 3; 
 	$b::integer = 4; 
-	$c::integer = #test $a, $b; --함수
-	$c::integer = #test $a, $b; --함수호출2 
-	$a, $b :: integer, bool; 
-
-	#test $a, $d; 
+	$c::integer = #test $a, "hi"; --함수
 	end $c; 
 )
