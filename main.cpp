@@ -8,7 +8,8 @@
 using namespace std; 
 
 //global symbol table
-SymTab globalTable("global");  
+SymTab globalTable("global");
+int codeSection = 1; 
 
 int main(){
 
@@ -53,6 +54,17 @@ int main(){
   if( typeCheck == false ) {
     cout << "can not continue because of type check error  " << endl; 
     return -1; 
+  }
+
+  //================== code generator ====================================================
+  for(int i = 0; i < functionCnt; i++){
+    FuncDecB* func = dynamic_cast<FuncDecB*>(program.at(i)); 
+    cout << "=======[[ code of " << string(func->id ) << " ]] ============" << endl; 
+
+    list<string> code = func->codeGen(symbolTables[i]); 
+    for(auto v : code){
+      cout << v << endl; 
+    }
   }
 
   return 0; 

@@ -1,0 +1,15 @@
+#main::void->integer(
+  start; 
+
+  $a :: integer; 
+
+  $a = 3 + 4; 
+  if($a > 10){
+    @ <- "greaterThan10"; 
+  }
+  else{
+    @ <- "lessThan10"; 
+  }
+  @ <- "continue"; 
+  end 1; 
+)

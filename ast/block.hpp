@@ -6,6 +6,7 @@
 #include "../symtab/symtab.hpp"
 #include <vector> 
 #include <iostream> 
+#include <list>
 using namespace std; 
 
 class Block{
@@ -13,6 +14,7 @@ public :
   virtual void print(int space = 0); 
   virtual void addSymbol(SymTab* table, SymTab* globaltable); 
   virtual bool checkType(SymTab* table);
+  virtual list<string> codeGen(SymTab* table); 
 }; 
 
 class FuncBodyB : public Block{
@@ -24,6 +26,7 @@ public:
   FuncBodyB(vector<Node*>* s, Node* e, vector<Block*>* st);
   bool checkType(SymTab* table);  
   void addSymbol(SymTab* table, SymTab* globaltable);  
+  list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
 
@@ -38,6 +41,7 @@ public:
   FuncDecB(char* i, vector<Node*>* in, Node* out, FuncBodyB* fb); 
   bool checkType(SymTab* table); 
   void addSymbol(SymTab* table, SymTab* globaltable); 
+  list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 
 }; 
@@ -56,6 +60,7 @@ public:
   void setGlobal(); 
   bool checkType(SymTab* table); 
   void addSymbol(SymTab* table, SymTab* globaltable); 
+  list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
 
@@ -68,6 +73,7 @@ public:
   IfB(Node* c, vector<Block*>* i, vector<Block*>* e = nullptr); 
   bool checkType(SymTab* table); 
   void addSymbol(SymTab* table, SymTab* globaltable); 
+  list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
 
@@ -80,6 +86,7 @@ public:
   WhileB(Node* c, vector<Block*>* s); 
   bool checkType(SymTab* table); 
   void addSymbol(SymTab* table, SymTab* globaltable); 
+  list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
 
@@ -90,6 +97,7 @@ public:
   Node* other;  
 
   CmdB(Node* c, Node* o); 
+  list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
 
@@ -100,6 +108,7 @@ public :
   Node* exp; 
 
   AssB(Node* i, Node* e); 
+  list<string> codeGen(SymTab* table); 
   bool checkType(SymTab* table); 
   void print(int space = 0); 
 }; 

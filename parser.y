@@ -146,8 +146,8 @@ IFactor : _MINUS Number            { dbg("unary minus\n");  $$ = new OpN(UMINUS,
        ;
 
 Number  : Id                       { dbg("find id\n");            $$ = $1; }
-       | _LITERAL                  { dbg("this is stirng \n");    $$ = new IteralN(STRING, _LITERAL, lineno);  }
-       | _NUMBER                   { dbg("find number\n");        $$ = new IteralN(INT, _NUMBER, lineno); } 
+       | _LITERAL                  { dbg("this is stirng \n");    $$ = new IteralN(STRING, $1, lineno);  }
+       | _NUMBER                   { dbg("find number\n");        $$ = new IteralN(INT, $1, lineno); } 
        | _OPAREN Exp _CPAREN       { dbg("into parentheses\n");   $$ = $2; }
        ;
 

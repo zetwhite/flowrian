@@ -1,0 +1,16 @@
+#main::void->integer(
+  start; 
+
+  $i::integer;
+  $sum :: integer; 
+  $i = 1; 
+  $sum = 0 ; 
+  while($i < 10){
+    $sum = $sum + $i; 
+    $i = $i + 1; 
+  }
+  @ <- "sum";
+  @ <- $sum; 
+
+  end 1; 
+)

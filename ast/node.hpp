@@ -4,6 +4,7 @@
 #include <iostream> 
 #include <vector>
 #include <string.h> 
+#include <list> 
 #include "../symtab/symtab.hpp"
 #include "../global.hpp"
 
@@ -20,15 +21,15 @@ public :
   virtual void addSon(Node* n);  
   virtual void print(); 
   virtual ITERTYPE calcType(SymTab* table);  
+  virtual list<string> calcCode(SymTab* table); 
 }; 
 
 class CmdN : public Node {
 public: 
   CMDTYPE type; 
 
-  CmdN(CMDTYPE t, int l); 
+  CmdN(CMDTYPE t, int l);
   void print(); 
-
 }; 
 
 class OpN : public Node{
@@ -36,7 +37,8 @@ public :
   OPTYPE type; 
 
   OpN(OPTYPE t, int l); 
-  ITERTYPE calcType(SymTab* table); 
+  ITERTYPE calcType(SymTab* table);
+  list<string> calcCode(SymTab* table);  
   void print(); 
 }; 
 
@@ -47,6 +49,7 @@ public:
 
   IdN(IDTYPE t, char* s, int l); 
   ITERTYPE calcType(SymTab* table); 
+  list<string> calcCode(SymTab* table);  
   void print(); 
 
 }; 
@@ -71,7 +74,8 @@ public:
 
   IteralN(ITERTYPE t, bool value, int l); 
   IteralN(ITERTYPE t, int value, int l);
-  IteralN(ITERTYPE t, char* value, int l); 
+  IteralN(ITERTYPE t, char* value, int l);
+  list<string> calcCode(SymTab* table);   
   ITERTYPE calcType(SymTab* table); 
   void print(); 
 }; 

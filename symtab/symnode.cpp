@@ -4,11 +4,15 @@ SymNode::SymNode(ITERTYPE t, int o){
   type = t; 
   offset = o; 
   address = nullptr; 
+
   if(t == INT || t == BOOL){
-    size = 4; 
+    size = 1; 
   }
-  else if(t == VOID || t== STRING){
+  if(t == VOID){
     size = 0; 
+  }
+  if(t == STRING){
+    size = 10; //can handle only up to 10 character...;; 
   }
 }
 

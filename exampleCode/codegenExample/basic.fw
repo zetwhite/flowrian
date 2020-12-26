@@ -1,0 +1,17 @@
+
+
+#main::void->integer(
+  start; 
+
+  $a :: integer; 
+  $b :: integer; 
+
+  $a = 3 + 4; 
+  $b = 5 + 10 - 2; 
+  @ <- $a; 
+  @ <- $b;
+
+  @ <- "HelloWorld";
+
+  end 1; 
+)

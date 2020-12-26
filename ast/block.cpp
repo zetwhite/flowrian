@@ -3,6 +3,7 @@
 
 using namespace std; 
 
+extern int codeSection; 
 extern vector<Block*> program; 
 const string TE = "[TYPE ERROR] "; 
 const string SE = "[SYNTAX ERROR] "; 
@@ -42,6 +43,10 @@ void Block::addSymbol(SymTab* table, SymTab* globaltable){
 
 bool Block::checkType(SymTab* table){
   return true; 
+}
+
+list<string> Block::codeGen(SymTab* table){
+  return list<string>(); 
 }
 
 void printNodeList(vector<Node*>& nodes){
@@ -140,6 +145,19 @@ bool FuncDecB::checkType(SymTab* table){
   return body->checkType(table); 
 }
 
+list<string> FuncDecB::codeGen(SymTab* table){
+  list<string> code; 
+
+  //stack allocation
+  code.push_back("ssp " + to_string(table->offset)); 
+
+  code.splice(code.end(), body->codeGen(table)); 
+
+  //something to return; 
+  return code; 
+} 
+
+
 //-----------------------------------------------
 
 void FuncBodyB::print(int space){
@@ -169,6 +187,16 @@ bool FuncBodyB::checkType(SymTab* table){
   }
   return result; 
 }
+
+list<string> FuncBodyB::codeGen(SymTab* table){
+  list<string> code; 
+  for(int i = 0; i < stmts.size(); i++){
+    list<string> addr = stmts[i]->codeGen(table); 
+    code.insert(code.begin(), addr.begin(), addr.end()); 
+  }
+  return code; 
+} 
+
 
 //--------------------------------------------------
 
@@ -235,6 +263,28 @@ void VarDecB::print(int space){
     value->print(); 
 }
 
+list<string> VarDecB::codeGen(SymTab* table){
+  list<string> code; 
+  if(value != nullptr && ids.size() == 1){
+    code.splice(code.end(), value->calcCode(table)); 
+    string vid = string(dynamic_cast<IdN*>(ids[0])->value); 
+    int offset = table->lookupOffset(vid); 
+
+    if(types[0]->calcType(table) == STRING){
+      int size = code.size(); 
+      if(size > 10) 
+        size = 10;
+      for(int i = 0; i < size; i++){
+        code.push_back("str " + to_string(offset + size - i)); 
+      } 
+    }
+    else if(types[0]->calcType(table) == INT){
+      code.push_back("str " + to_string(offset)); 
+    }
+  }
+  return code; 
+}
+
 //-------------------------------------------------
 
 IfB::IfB(Node* c, vector<Block*>* i, vector<Block*>* e ){
@@ -270,6 +320,39 @@ bool IfB::checkType(SymTab* table){
  return true; 
 }
 
+list<string> IfB::codeGen(SymTab* table){
+  list<string> code;
+
+  int ifSection, continueSection; 
+  list<string> conCode = condition->calcCode(table); 
+  code.insert(code.begin(), conCode.begin(), conCode.end()); 
+
+  code.push_back("fjp L" + to_string(codeSection)); 
+  ifSection = codeSection; 
+  codeSection++; 
+
+  //fi statement
+  for(int i = 0; i < ifStmts.size(); i++){
+    list<string> addr = ifStmts[i]->codeGen(table); 
+    code.insert(code.end(), addr.begin(), addr.end()); 
+  }
+  code.push_back("ujp L" + to_string(codeSection)); 
+  continueSection = codeSection; 
+  codeSection++; 
+
+  //else statement 
+  code.push_back("L"+ to_string(ifSection) + ": ldc 0"); 
+  for(int i = 0; i < elseStmts.size(); i++){
+    list<string> addr = elseStmts[i]->codeGen(table); 
+    code.insert(code.end(), addr.begin(), addr.end()); 
+  }
+
+  //continue statment 
+  code.push_back("L"+ to_string(continueSection) + ": ldc 0"); 
+  return code; 
+} 
+
+
 //---------------------------------------------------
 
 WhileB::WhileB(Node* n, vector<Block*>* s){
@@ -297,6 +380,28 @@ bool WhileB::checkType(SymTab* table){
   return true; 
 }
 
+list<string> WhileB::codeGen(SymTab* table){
+  list<string> code;
+  int conditionSection, continueSection; 
+  conditionSection = codeSection++; 
+  continueSection = codeSection++; 
+
+  //condition Section
+  code.push_back("L"+ to_string(conditionSection) + ": ldc 0"); 
+  list<string> conCode = condition->calcCode(table); 
+  code.splice(code.end(), conCode); 
+  code.push_back("fjp L" + to_string(continueSection)); 
+
+  //inner while 
+  for(int i = 0; i < stmts.size(); i++){
+    list<string> addr = stmts[i]->codeGen(table); 
+    code.splice(code.end(), addr); 
+  }
+  code.push_back("ujp L" + to_string(conditionSection)); 
+  code.push_back("L"+ to_string(continueSection) + ": ldc 0"); 
+  return code; 
+} 
+
 //-----------------------------------
 
 CmdB::CmdB(Node* c, Node* o){
@@ -307,6 +412,33 @@ CmdB::CmdB(Node* c, Node* o){
 void CmdB::print(int space){
   cmd->print(); 
   other->print(); 
+}
+
+list<string> CmdB::codeGen(SymTab* table){
+  list<string> code; 
+  CMDTYPE ctype = dynamic_cast<CmdN*>(cmd)->type; 
+
+  
+  if(ctype == READ){
+
+  }
+
+  if(ctype == WRITE){
+    list<string> getValue = other->calcCode(table);
+    code.insert(code.begin(), getValue.begin(), getValue.end());  
+    
+    ITERTYPE t = other->calcType(table); 
+    if(t == INT){
+      code.push_back("out"); 
+    }
+    else if (t == STRING){
+      for(int i = 0; i < getValue.size(); i++){
+        code.push_back("outc"); 
+      }
+    }
+  }
+
+  return code; 
 }
 
 
@@ -323,13 +455,33 @@ void AssB::print(int space){
 }
 
 bool AssB::checkType(SymTab* table){
-  if(id->calcType(table) != exp->calcType(table)) {
+  ITERTYPE itype = id->calcType(table); 
+  ITERTYPE etype = exp->calcType(table); 
+  if( itype != etype ) {
     cout << TE << "assignment type error at LINE " << id->lineno << endl; 
-    cout << "left is " << toString(id->calcType(table)) << ", but right is " << toString(exp->calcType(table)) << endl;  
+    if( itype == INVALID){
+      cout << SE << "left variable no defined!!" << endl; 
+    }
+    else {
+      cout << "left is " << toString(itype) << ", but right is " << toString(etype) << endl;  
+    }
     return false; 
   }
   return true; 
 }
+
+
+list<string> AssB::codeGen(SymTab* table){
+  list<string> code; 
+
+  code.splice(code.end(), exp->calcCode(table));
+
+  string vid = string(dynamic_cast<IdN*>(id)->value);
+  int offset = table->lookupOffset(vid); 
+
+  code.push_back("str " + to_string(offset)); 
+  return code; 
+} 
 
 
 //----------------------------------

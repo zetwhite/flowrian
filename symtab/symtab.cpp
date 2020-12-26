@@ -25,6 +25,23 @@ ITERTYPE SymTab::lookupType(string vid){
   
 }
 
+int SymTab::lookupOffset(string vid){
+  auto iter = table.find(vid); 
+  if(iter == table.end())
+    return ERR_OFFSET; 
+  else
+    return iter->second.offset; 
+} 
+
+int SymTab::lookupSize(string vid){
+  auto iter = table.find(vid); 
+  if(iter == table.end())
+    return ERR_SIZE; 
+  else
+    return iter->second.size; 
+}
+
+
 void SymTab::print(){
   cout << "=== [[ symbol table of (" << functionId << ") ]] ===" << endl; 
   cout << "id \t\t type \t\toffset \t\tsize" << endl; 
