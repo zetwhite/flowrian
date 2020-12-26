@@ -3,36 +3,40 @@
 
 #include <iostream> 
 #include <vector>
+#include <string.h> 
+#include "../symtab/symtab.hpp"
+#include "../global.hpp"
+
 using namespace std;
-
-typedef enum {CMD, OP, ID, TYPE, ITERAL} NTYPE; 
-
-typedef enum {READ, WRITE, CREATE, DELETE} CMDTYPE; 
-typedef enum {ADD, SUB, MUL, MOD, DIV, GT, LT, GE, LE, EQ, NEQ, UPLUS, UMINUS} OPTYPE; 
-typedef enum {FUNCID, VARID} IDTYPE; 
-typedef enum {INT, STRING, VOID, FLOAT} ITERTYPE; 
 
 class Node {
 public :
   vector<Node*> son; 
+  int lineno = 0;
+  Node(int l){
+    lineno = l; 
+  }
   virtual void addSons(vector<Node*>* n);
   virtual void addSon(Node* n);  
   virtual void print(); 
+  virtual ITERTYPE calcType(SymTab* table);  
 }; 
 
 class CmdN : public Node {
 public: 
   CMDTYPE type; 
 
-  CmdN(CMDTYPE t); 
+  CmdN(CMDTYPE t, int l); 
   void print(); 
+
 }; 
 
 class OpN : public Node{
 public : 
   OPTYPE type; 
 
-  OpN(OPTYPE t); 
+  OpN(OPTYPE t, int l); 
+  ITERTYPE calcType(SymTab* table); 
   void print(); 
 }; 
 
@@ -41,7 +45,8 @@ public:
   IDTYPE type; 
   char* value; 
 
-  IdN(IDTYPE t, char* s); 
+  IdN(IDTYPE t, char* s, int l); 
+  ITERTYPE calcType(SymTab* table); 
   void print(); 
 
 }; 
@@ -50,7 +55,8 @@ class TypeN : public Node{
 public: 
   ITERTYPE type;
 
-  TypeN(ITERTYPE t); 
+  TypeN(ITERTYPE t, int l); 
+  ITERTYPE calcType(SymTab* table); 
   void print(); 
 }; 
 
@@ -60,10 +66,13 @@ public:
 	union {
     int ival;
 	  char *sval;
+    bool bval; 
 	}; 
 
-  IteralN(ITERTYPE t, int value);
-  IteralN(ITERTYPE t, char* value); 
+  IteralN(ITERTYPE t, bool value, int l); 
+  IteralN(ITERTYPE t, int value, int l);
+  IteralN(ITERTYPE t, char* value, int l); 
+  ITERTYPE calcType(SymTab* table); 
   void print(); 
 }; 
 

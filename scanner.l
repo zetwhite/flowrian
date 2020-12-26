@@ -4,7 +4,7 @@
 	#include "ast/node.hpp"
 	#include <string.h>
 
-	int line = 1; 
+	extern int lineno; 
 %}
 
 digit		[0-9] 
@@ -22,6 +22,7 @@ literal 	\"([^\\\"]|\\.)*\"
 						return _LITERAL; 
 					}
 {funcid}	{ yylval.sVal = strdup(yytext); return _FUNCID; }
+{space}	{ }
 
 ","			{ return _COMMA; }
 "::"		{ return _COLONS; }
@@ -47,12 +48,15 @@ literal 	\"([^\\\"]|\\.)*\"
 "=="		{ return _EQ; }
 "!="		{ return _NEQ; }
 
-"--".*"\n"	{ }
+"--".*"\n" { lineno++; }
+"\n"			 { lineno++; }
 
 "integer" { return _INT; }
-"float"		{ return _FLOAT; }
+"bool"		{ return _BOOL; }
 "string"	{ return _STRING; }
 "void"		{ return _VOID; }
+"true"		{ return _TRUE; }
+"false"		{ return _FALSE; }
 
 "if"		{ return _IF; }
 "else"	{ return _ELSE; }

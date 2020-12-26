@@ -2,15 +2,17 @@
 #define __AST_H__
 
 #include "node.hpp"
+#include "../symtab/symnode.hpp"
+#include "../symtab/symtab.hpp"
 #include <vector> 
 #include <iostream> 
 using namespace std; 
 
-//typedef enum {FUNC_DEC, VAR_DEC, GVAR_DEC, IF, WHILE, CMD, ASS, SIMPLE} STTYPE;
-
 class Block{
 public : 
-  virtual void print(); 
+  virtual void print(int space = 0); 
+  virtual void addSymbol(SymTab* table, SymTab* globaltable); 
+  virtual bool checkType(SymTab* table);
 }; 
 
 class FuncBodyB : public Block{
@@ -19,8 +21,10 @@ public:
   Node* end; 
   vector<Block*> stmts; 
 
-  FuncBodyB(vector<Node*>* s, Node* e, vector<Block*>* st); 
-  void print(); 
+  FuncBodyB(vector<Node*>* s, Node* e, vector<Block*>* st);
+  bool checkType(SymTab* table);  
+  void addSymbol(SymTab* table, SymTab* globaltable);  
+  void print(int space = 0); 
 }; 
 
 
@@ -32,7 +36,10 @@ public:
   FuncBodyB* body;
 
   FuncDecB(char* i, vector<Node*>* in, Node* out, FuncBodyB* fb); 
-  void print(); 
+  bool checkType(SymTab* table); 
+  void addSymbol(SymTab* table, SymTab* globaltable); 
+  void print(int space = 0); 
+
 }; 
 
 
@@ -47,7 +54,9 @@ public:
   VarDecB(Node* i, Node* t, bool g = false); 
   VarDecB(Node* i, Node* t, Node* e, bool g = false); 
   void setGlobal(); 
-  void print(); 
+  bool checkType(SymTab* table); 
+  void addSymbol(SymTab* table, SymTab* globaltable); 
+  void print(int space = 0); 
 }; 
 
 class IfB : public Block {
@@ -57,7 +66,9 @@ public:
   vector<Block*> elseStmts; 
 
   IfB(Node* c, vector<Block*>* i, vector<Block*>* e = nullptr); 
-  void print(); 
+  bool checkType(SymTab* table); 
+  void addSymbol(SymTab* table, SymTab* globaltable); 
+  void print(int space = 0); 
 }; 
 
 
@@ -67,7 +78,9 @@ public:
   vector<Block*> stmts; 
 
   WhileB(Node* c, vector<Block*>* s); 
-  void print(); 
+  bool checkType(SymTab* table); 
+  void addSymbol(SymTab* table, SymTab* globaltable); 
+  void print(int space = 0); 
 }; 
 
 
@@ -77,7 +90,7 @@ public:
   Node* other;  
 
   CmdB(Node* c, Node* o); 
-  void print(); 
+  void print(int space = 0); 
 }; 
 
 
@@ -87,7 +100,8 @@ public :
   Node* exp; 
 
   AssB(Node* i, Node* e); 
-  void print(); 
+  bool checkType(SymTab* table); 
+  void print(int space = 0); 
 }; 
 
 
@@ -97,7 +111,8 @@ public :
 
   SimpleB(Node*); 
   SimpleB(); 
-  void print();  
+  bool checkType(SymTab* table); 
+  void print(int space = 0);  
 }; 
 
 #endif

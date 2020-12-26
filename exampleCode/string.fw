@@ -1,11 +1,15 @@
 
 #main :: void -> integer (
   start; 
+  $a ::integer; 
+
   $str::string; 
-  $str = "helloworld"; 
+  $str = "hello";
 
   $test::string = "good test"; 
-  $test::string = "new\nline test"; 
+  $test3::string = "new\nline test"; 
   $tes2::string = "happy \" day"; 
+
+  $tes2 = "other string"; 
   end 0; 
 )

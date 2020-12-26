@@ -8,7 +8,8 @@
   start ;
   $greeting::string = "hello flowrian"; 
   @ <- $greeting; 
-  $sum = #add 3, 4; 
-  @ <- $sum;  
+  $sum :: integer; 
+  $sum = #add 3, "god"; 
+  -- @ <- $sum;  
   end 1; 
 )

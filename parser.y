@@ -2,7 +2,7 @@
 	#include <stdio.h> 
 	#include "ast/block.hpp"
        #include "ast/node.hpp"
-       #define DBUG
+       //#define DBUG
 
        using namespace std; 
 	int yyerror(const char* msg), yylex(); 
@@ -13,8 +13,8 @@
               fflush(stdout); 
               #endif
        }
-
-       vector<Block*>* program; 
+       int lineno = 1; 
+       vector<Block*> program; 
 %}	
 %code requires { #include "ast/node.hpp" }
 %code requires { #include "ast/block.hpp" }
@@ -41,17 +41,18 @@
 %token _AT _TOLEFT _TORIGHT
 %token _PLUS _MINUS _TIMES _MOD _DIV 
 %token _GT _LT _GE _LE _EQ _NEQ 
-%token _INT _FLOAT _STRING _VOID 
+%token _INT _BOOL _STRING _VOID 
+%token _TRUE _FALSE
 
 %right _ELSE 
 %start Prog
 
 %%
-Prog   : Funcs              { dbg("total program\n"); program = $1; }
+Prog   : Funcs              { dbg("total program\n");}
        ; 
 
-Funcs  : StDecFunc Funcs    { dbg("declare function!\n"); $$->push_back($1); }
-       |                    { $$ = new vector<Block*>(); }
+Funcs  : StDecFunc Funcs    { dbg("declare function!\n"); program.push_back($1); }
+       |                    { }
        ; 
 
 StDecFunc : _FUNCID _COLONS TypeList _TORIGHT Type FuncBody
@@ -67,10 +68,10 @@ FuncArg : IdList            { $$ = $1; }
        ; 
 
 FuncRet : Exp               { $$ = $1; }
-       |                    { dbg("create empty ret node"); $$ = new IteralN(INT, 0); }
+       |                    { dbg("create empty ret node"); $$ = new IteralN(INT, 0, lineno); }
        ; 
 
-Stmts : Stmt Stmts          { dbg("add new statments\n");   $1->print(); $2->push_back($1); $$ = $2;}
+Stmts : Stmt Stmts          { dbg("add new statments\n");   $2->push_back($1); $$ = $2;}
        |                    { dbg("no statment!\n");        $$ = new vector<Block*>();}
        ; 
 
@@ -90,7 +91,7 @@ StDecId : IdList _COLONS TypeList  { dbg("variable declartion list\n"); $$ = new
        ; 
 
 StGlobal : _GLOBAL StDecId  { dynamic_cast<VarDecB*>($2)->setGlobal(); $$ = $2; }       
-       | _DELETE Id         { Node* n = new CmdN(DELETE); $$ = new CmdB(n, $2); }
+       | _DELETE Id         { Node* n = new CmdN(DELETE, lineno); $$ = new CmdB(n, $2); }
        ;
 
 StIf   : _IF _OPAREN Condition _CPAREN _OCURLY Stmts _CCURLY 
@@ -103,8 +104,8 @@ StWhile : _WHILE _OPAREN Condition _CPAREN _OCURLY Stmts _CCURLY
               { dbg("while part\n"); $$ = new WhileB($3, $6); }
        ; 
 
-StCommand : _AT _TOLEFT Exp  { dbg("print statments01\n");  Node* n = new CmdN(WRITE); $$ = new CmdB(n, $3); }
-       | Id _TOLEFT _AT      { dbg("read statement\n");     Node* n = new CmdN(READ);  $$ = new CmdB(n, $1); }
+StCommand : _AT _TOLEFT Exp  { dbg("print statments01\n");  Node* n = new CmdN(WRITE, lineno); $$ = new CmdB(n, $3); }
+       | Id _TOLEFT _AT      { dbg("read statement\n");     Node* n = new CmdN(READ, lineno);  $$ = new CmdB(n, $1); }
        ; 
 
 StAssign : Id _ASS Exp       { dbg("Assignment\n");          $$ = new AssB($1, $3); }
@@ -114,38 +115,39 @@ StSimple :  Exp              { dbg("JustExp \n");           $$ = new SimpleB($1)
        ;
 
 
-Condition : Exp _LT Exp      { dbg("Less Than \n");         $$ = new OpN(LT); $$->addSon($3); }
-       | Exp _GT Exp         { dbg("Greater Then\n");       $$ = new OpN(GT); $$->addSon($3); }
-       | Exp _LE Exp         { dbg("Less Equal\n");         $$ = new OpN(LE); $$->addSon($3); }
-       | Exp _GE Exp         { dbg("Greate Equal\n");       $$ = new OpN(GE); $$->addSon($3); }
-       | Exp _EQ Exp         { dbg("Equal\n");              $$ = new OpN(EQ); $$->addSon($3); }
-       | Exp _NEQ Exp        { dbg("Not Equal\n");          $$ = new OpN(NEQ); $$->addSon($3); }
+Condition : Exp _LT Exp      { dbg("Less Than \n");         $$ = new OpN(LT, lineno); $$->addSon($1); $$->addSon($3);  }
+       | Exp _GT Exp         { dbg("Greater Then\n");       $$ = new OpN(GT, lineno); $$->addSon($1); $$->addSon($3);  }
+       | Exp _LE Exp         { dbg("Less Equal\n");         $$ = new OpN(LE, lineno); $$->addSon($1); $$->addSon($3);  }
+       | Exp _GE Exp         { dbg("Greate Equal\n");       $$ = new OpN(GE, lineno); $$->addSon($1); $$->addSon($3);  }
+       | Exp _EQ Exp         { dbg("Equal\n");              $$ = new OpN(EQ, lineno);  $$->addSon($1); $$->addSon($3); }
+       | Exp _NEQ Exp        { dbg("Not Equal\n");          $$ = new OpN(NEQ, lineno);  $$->addSon($1); $$->addSon($3); }
+       | _TRUE               { dbg("True\n");               $$ = new IteralN(BOOL, true, lineno);     }
+       | _FALSE              { dbg("True\n");               $$ = new IteralN(BOOL, false, lineno);       }
        ; 
 
-Exp    : Exp _PLUS Term     { dbg("plus binary op\n");      $$ = new OpN(ADD); $$->addSon($3); }
-       | Exp _MINUS Term    { dbg("minus binary op\n");     $$ = new OpN(SUB); $$->addSon($3); }
+Exp    : Exp _PLUS Term     { dbg("plus binary op\n");      $$ = new OpN(ADD, lineno);  $$->addSon($1); $$->addSon($3); }
+       | Exp _MINUS Term    { dbg("minus binary op\n");     $$ = new OpN(SUB, lineno);  $$->addSon($1); $$->addSon($3); }
        | Term               { $$ = $1; }
        ;
 
-Term   : Term _TIMES Factor  { dbg("times binary op\n");    $$ = new OpN(MUL); $$->addSon($3); }
-       | Term _DIV Factor    { dbg("div binary op\n");      $$ = new OpN(DIV); $$->addSon($3); }
-       | Term _MOD Factor    { dbg("mod binary op\n");      $$ = new OpN(MOD); $$->addSon($3); }  
+Term   : Term _TIMES Factor  { dbg("times binary op\n");    $$ = new OpN(MUL, lineno);  $$->addSon($1); $$->addSon($3); }
+       | Term _DIV Factor    { dbg("div binary op\n");      $$ = new OpN(DIV, lineno);  $$->addSon($1); $$->addSon($3); }
+       | Term _MOD Factor    { dbg("mod binary op\n");      $$ = new OpN(MOD, lineno);  $$->addSon($1); $$->addSon($3); }  
        | Factor              { $$ = $1; }
        ;
 
-Factor  : _FUNCID ExpList   
-              { dbg("call function\n");   $$ = new IdN(FUNCID, $1);  $$->addSons($2); $$->print(); }
+Factor  : _FUNCID ExpList   { dbg("call function\n");   $$ = new IdN(FUNCID, $1, lineno);  $$->addSons($2); }
        | IFactor            { $$ = $1; }
        ; 
 
-IFactor : _MINUS Number            { dbg("unary minus\n");  $$ = new OpN(UMINUS); $$->addSon($2); }
-       | _PLUS Number              { dbg("unary plus\n");   $$ = new OpN(UPLUS); $$->addSon($2); }
+IFactor : _MINUS Number            { dbg("unary minus\n");  $$ = new OpN(UMINUS, lineno); $$->addSon($2); }
+       | _PLUS Number              { dbg("unary plus\n");   $$ = new OpN(UPLUS, lineno); $$->addSon($2); }
        | Number                    { $$ = $1; }
        ;
 
 Number  : Id                       { dbg("find id\n");            $$ = $1; }
-       | _LITERAL                  { dbg("this is stirng \n");    $$ = new IteralN(STRING, _LITERAL);  }
-       | _NUMBER                   { dbg("find number\n");        $$ = new IteralN(INT, _NUMBER); } 
+       | _LITERAL                  { dbg("this is stirng \n");    $$ = new IteralN(STRING, _LITERAL, lineno);  }
+       | _NUMBER                   { dbg("find number\n");        $$ = new IteralN(INT, _NUMBER, lineno); } 
        | _OPAREN Exp _CPAREN       { dbg("into parentheses\n");   $$ = $2; }
        ;
 
@@ -161,22 +163,17 @@ ExpList : ExpList _COMMA Exp       { $1->push_back($3); $$ = $1; }
        | Exp                       { $$ = new vector<Node*>(); $$->push_back($1); }
        ; 
 
-Id     : _VARID      { dbg($1); $$ = new IdN(VARID, $1); }
+Id     : _VARID      { dbg($1); $$ = new IdN(VARID, $1, lineno); }
        ; 
 
-Type   : _INT        { dbg("find var int \n");       $$ = new TypeN(INT); }
-       | _FLOAT      { dbg("find var flaot \n");     $$ = new TypeN(FLOAT); }
-       | _STRING     { dbg("find var string \n");    $$ = new TypeN(STRING); }
-       | _VOID       { dbg("find var void \n");      $$ = new TypeN(VOID); } 
+Type   : _INT        { dbg("find var int \n");       $$ = new TypeN(INT, lineno); }
+       | _BOOL      { dbg("find var flaot \n");     $$ = new TypeN(BOOL, lineno); }
+       | _STRING     { dbg("find var string \n");    $$ = new TypeN(STRING, lineno); }
+       | _VOID       { dbg("find var void \n");      $$ = new TypeN(VOID, lineno); } 
        ; 
 %%
 
 int yyerror(const char* msg) { 
        fputs(msg, stderr); 
-       return 0; 
-}
-
-int main(){
-       yyparse(); 
        return 0; 
 }

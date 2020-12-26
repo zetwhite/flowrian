@@ -1,5 +1,5 @@
 #test::integer, integer -> integer (
-  start $a, $b;
+  start $a, $b; 
 
 	$c::integer; 
   delete $gVar;
@@ -10,7 +10,7 @@
 #main::void -> integer (
 	start; 
 
-  create $gVar::integer = 20; --글로벌 변수
+  global $gVar::integer = 20; --글로벌 변수
 	$a, $b :: integer, integer; 
   $a <- @; 
   $b <- @; 

@@ -10,7 +10,7 @@
 	$b::integer = 4; 
 	$c::integer = #test $a, $b; --함수
 	$c::integer = #test $a, $b; --함수호출2 
-	$a, $b :: integer, float; 
+	$a, $b :: integer, bool; 
 
 	#test $a, $d; 
 	end $c; 

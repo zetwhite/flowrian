@@ -1,4 +1,11 @@
 #include "node.hpp"
+#include "block.hpp"
+
+extern SymTab globalTable;  
+extern vector<Block*> program; 
+
+const string TE = "[TYPE ERROR] "; 
+const string SE = "[SYNTAX ERROR] "; 
 
 string toString(NTYPE type){
   switch(type){
@@ -26,14 +33,17 @@ void Node::addSon(Node* n){
   son.push_back(n); 
 }
 
-
 void Node::addSons(vector<Node*>* n){
   son.insert(son.end(), n->begin(), n->end()); 
 }
 
+ITERTYPE Node:: calcType(SymTab* table){
+  return INVALID; 
+}
+
 //==============================================
 
-CmdN::CmdN(CMDTYPE t){
+CmdN::CmdN(CMDTYPE t, int l):Node(l){
   type = t; 
 }
 
@@ -43,18 +53,56 @@ void CmdN::print(){
 
 //==============================================
 
-OpN::OpN(OPTYPE t){
+OpN::OpN(OPTYPE t, int l):Node(l){
   type = t; 
 }
-
 
 void OpN::print(){
   cout << "operation node\n"; 
 }
 
+ITERTYPE OpN::calcType(SymTab* table){
+  //check unary operation
+  if(type == UPLUS || type == UMINUS){
+    if( son.size() <= 0){
+      cout << SE << "unary operatoin operand error at LINE " << lineno << endl; 
+      return INVALID; 
+    }
+    if( son[0]->calcType(table) == INT){
+      return INT; 
+    }  
+  }
+  
+  if(son.size() != 2){
+    cout << "son size : " << son.size() << endl; 
+    cout << SE << "unary operatoin operand error at LINE " << lineno << endl; 
+    return INVALID; 
+  }
+  ITERTYPE t1 = son[0]->calcType(table); 
+  ITERTYPE t2 = son[1]->calcType(table); 
+  if( t1 != t2 ){
+    cout << TE <<"operand type is not same at LINE " << lineno << endl; 
+    return INVALID; 
+  }
+  if( t1 == INT ){
+    if(type == LT || type == GT || type == GE || type == LE || type == EQ || type == NEQ)
+      return BOOL; 
+    else
+      return INT;  
+  }
+  if( t1 == BOOL ){
+    if(!(type == EQ || type == NEQ))
+      cout << TE <<"operand type must be bool or number at LINE " << lineno << endl; 
+    else
+      return BOOL; 
+  }
+  cout << TE << "operand type must be bool or number at LINE " << lineno << endl; 
+  return INVALID; 
+}
+
 //============================================
 
-IdN::IdN(IDTYPE t, char* s){
+IdN::IdN(IDTYPE t, char* s, int l):Node(l){
   type = t; 
   value = s; 
 }
@@ -64,29 +112,82 @@ void IdN::print(){
   Node::print();
 }
 
+ITERTYPE IdN::calcType(SymTab* table){
+  if(type == VARID){
+    ITERTYPE t = table->lookupType(string(value));
+    if(t == INVALID){
+      t = globalTable.lookupType(string(value)); 
+    }
+    return t; 
+  } 
+  if(type == FUNCID){
+    //search function in list 
+    FuncDecB* funcP = nullptr; 
+    for(int i = 0; i < program.size(); i++){
+      FuncDecB* tmpP = dynamic_cast<FuncDecB*>(program[i]); 
+      if(strcmp(tmpP->id, value) == 0 ){
+        funcP = tmpP; 
+        break; 
+      }
+    }
+
+    //check argument type 
+    bool success = true; 
+    int argSize = funcP->inTypes.size(); 
+    int pasSize = son.size(); 
+    if(argSize != pasSize){
+      cout << SE << "calling function(" << string(value) << ") argument count is differ, at LINE " << lineno << endl; 
+      return INVALID; 
+    }
+    for(int i = 0; i < argSize; i++){
+      if(funcP->inTypes[i]->calcType(table) != son[i]->calcType(table)){
+        cout << TE << "calling function(" << string(value) << ") argument type is differ, at LINE" << lineno << endl;  
+        return INVALID; 
+      }
+    }
+    return funcP->outType->calcType(table);  
+  }
+  return VOID; 
+}
+
 //==============================================
 
-TypeN::TypeN(ITERTYPE t){
+TypeN::TypeN(ITERTYPE t, int l):Node(l){
   type = t; 
 }
 
 void TypeN::print(){
-  cout << "type node\n"; 
+  string strType = toString(type); 
+  cout << "type(" << strType  << ")"; 
 }
+
+ITERTYPE TypeN::calcType(SymTab* table){
+  return type; 
+}
+
 
 //==============================================
 
-IteralN::IteralN(ITERTYPE t, int value){
+IteralN::IteralN(ITERTYPE t, int value, int l):Node(l){
   type = t; 
   ival = value; 
 }
 
-IteralN::IteralN(ITERTYPE t, char* value){
+IteralN::IteralN(ITERTYPE t, char* value, int l):Node(l){
   type = t; 
   sval = value; 
 }
+
+IteralN::IteralN(ITERTYPE t, bool value, int l):Node(l){
+  type = t; 
+  bval = value; 
+}
+
 
 void IteralN::print(){
   cout << "interal node\n"; 
 }
 
+ITERTYPE IteralN::calcType(SymTab* table){
+  return type; 
+}
