@@ -8,23 +8,6 @@ extern vector<Block*> program;
 const string TE = "[TYPE ERROR] "; 
 const string SE = "[SYNTAX ERROR] "; 
 
-/*
-string toString(STTYPE type){
-  switch (type)
-  {
-    case FUNC_DEC: return "function delcaration"; 
-    case VAR_DEC: return "variable delcaration"; 
-    case GVAR_DEC: return "global variable command"; 
-    case IF : return "if block"; 
-    case WHILE : return "while block"; 
-    case CMD : return "input/output command"; 
-    case ASS : return "assignment block"; 
-    case SIMPLE : return "simple expression or function call"; 
-    default: return "wrong type"; 
-  }
-}
-*/
-
 string makespace(int s){
   string str; 
   for(int i = 0; i < s; i++){
@@ -37,8 +20,8 @@ void Block::print(int space) {
   // cout << "block type : " << toString(type) << endl; 
 }
 
-void Block::addSymbol(SymTab* table, SymTab* globaltable){
-  return; 
+bool Block::addSymbol(SymTab* table, SymTab* globaltable){
+  return true; 
 }
 
 bool Block::checkType(SymTab* table){
@@ -69,8 +52,7 @@ void FuncDecB::print(int space){
   Block::print(); 
   string s = makespace(space);
   string s_ =  makespace(space + 1);  
-  cout << s << "===============================" << endl; 
-  cout << s << "Delcare Function " << id << endl; 
+  cout << s << "===== Delcare Function " << id << "=====" << endl; 
   cout << s_ << "input arg type  : "; 
   printNodeList(inTypes); 
   cout << endl; 
@@ -79,14 +61,15 @@ void FuncDecB::print(int space){
   cout << endl; 
 }
 
-FuncDecB::FuncDecB(char* i, vector<Node*>* in, Node* out, FuncBodyB* fb){
+FuncDecB::FuncDecB(char* i, int fid, vector<Node*>* in, Node* out, FuncBodyB* fb){
   id = i; 
+  functionNumber = fid; 
   inTypes.insert(inTypes.end(), in->begin(), in->end()); 
   outType = out; 
   body = fb; 
 }
 
-void FuncDecB::addSymbol(SymTab* tab, SymTab* globaltab){
+bool FuncDecB::addSymbol(SymTab* tab, SymTab* globaltab){
   auto iter = inTypes.begin();
   //erase void type 
   while(iter != inTypes.end()){
@@ -101,19 +84,20 @@ void FuncDecB::addSymbol(SymTab* tab, SymTab* globaltab){
   if(tSize != iSize){
     cout << SE << " in " + string(id) + " declaration, function argument and start arugment count is differ"; 
     cout << " => fail to create symbol table" << endl; 
-    return; 
+    return false; 
   }
   for(int i = 0; i < inTypes.size(); i++){
-    ITERTYPE t = dynamic_cast<TypeN*>(inTypes[i])->type;
-    if(t != VOID){
-      string vid = string(dynamic_cast<IdN*>(body->starts[i])->value);  
-      bool res = tab->insert(vid, t);
-      if(res == false){
-        cout << SE <<  " in " + string(id) + " declaration, start variable has dup id" << endl; 
-      } 
-    }
+    TypeN* typeNode = dynamic_cast<TypeN*>(inTypes[i]); 
+    ITERTYPE t = typeNode->type;
+    int s = typeNode->size; 
+    string vid = string(dynamic_cast<IdN*>(body->starts[i])->value);  
+    bool res = tab->insert(vid, t, s);
+    if(res == false){
+      cout << SE <<  " in " + string(id) + " declaration, start variable has dup id" << endl; 
+      return false; 
+    } 
   }
-  body->addSymbol(tab, globaltab); 
+  return body->addSymbol(tab, globaltab); 
 }
 
 bool FuncDecB::checkType(SymTab* table){
@@ -138,8 +122,13 @@ bool FuncDecB::checkType(SymTab* table){
   ITERTYPE ttype = outType -> calcType(table); 
   if(ttype != VOID){
     ITERTYPE vtype = body->end->calcType(table); 
+    if(vtype == INVALID){
+      cout << SE << " in " + string(id) << ", undefined variable is found" << endl; 
+      return false; 
+    }
     if(ttype != vtype){
       cout << TE << " in " + string(id) + ", end value and return argument type is differ" << endl; 
+      return false; 
     }
   }
   return body->checkType(table); 
@@ -149,11 +138,20 @@ list<string> FuncDecB::codeGen(SymTab* table){
   list<string> code; 
 
   //stack allocation
+  if(string(id) != "#main")
+    code.push_back("F" + to_string(functionNumber) + ":"); 
   code.push_back("ssp " + to_string(table->offset)); 
-
   code.splice(code.end(), body->codeGen(table)); 
 
-  //something to return; 
+  if(string(id) == "#main")
+    code.push_back("stp"); 
+  else{
+    ITERTYPE t = dynamic_cast<TypeN*>(outType)->type; 
+    if(t == VOID)
+      code.push_back("retp"); 
+    else
+      code.push_back("retf"); 
+  }
   return code; 
 } 
 
@@ -173,17 +171,22 @@ FuncBodyB::FuncBodyB(vector<Node*>* s, Node* e, vector<Block*>* st){
   stmts.insert(stmts.end(), st->begin(), st->end()); 
 }
 
-void FuncBodyB::addSymbol(SymTab* tab, SymTab* globaltab){
+bool FuncBodyB::addSymbol(SymTab* tab, SymTab* globaltab){
+  bool result = true; 
   for(int i = 0; i < stmts.size(); i++){
-    stmts[i]->addSymbol(tab, globaltab); 
+    result = stmts[i]->addSymbol(tab, globaltab); 
+    if(result == false)
+      break; 
   }
+  return result; 
 }
 
 bool FuncBodyB::checkType(SymTab* table){
   bool result = true; 
   for(int i = 0; i < stmts.size(); i++){
-    if(stmts[i]->checkType(table) == false)
-      result = false; 
+    bool result = stmts[i]->checkType(table); 
+    if(result == false)
+      break; 
   }
   return result; 
 }
@@ -194,6 +197,8 @@ list<string> FuncBodyB::codeGen(SymTab* table){
     list<string> addr = stmts[i]->codeGen(table); 
     code.insert(code.begin(), addr.begin(), addr.end()); 
   }
+  code.splice(code.end(), end->calcCode(table));  
+  code.push_back("str 0"); //return value saver 
   return code; 
 } 
 
@@ -223,10 +228,11 @@ VarDecB::VarDecB(Node* i, Node* t, Node* e, bool g){
 
 bool VarDecB::checkType(SymTab* table){
   int iSize = ids.size(); 
-  int tSize = types.size(); 
-  if(iSize != tSize){
-    cout << SE  << "variable id and type isn't match" << endl; 
-    return false; 
+
+  if(iSize == 1 && value != nullptr){
+    TypeN* t = dynamic_cast<TypeN*>(types[0]); 
+    if(value->calcType(table) != t->type)
+      return false; 
   }
   return true; 
 }
@@ -235,25 +241,31 @@ void VarDecB::setGlobal(){
   global = true; 
 }
 
-void VarDecB::addSymbol(SymTab* table, SymTab* globaltab){
+bool VarDecB::addSymbol(SymTab* table, SymTab* globaltab){
   int iSize = ids.size(); 
   int tSize = types.size(); 
   if(iSize != tSize){
     cout << SE  << "variable id and type isn't match => fail to create symboltable" << endl; 
-    return; 
+    return false; 
   }
   for(int i = 0; i < ids.size(); i++){
-    string vid = string(dynamic_cast<IdN*>(ids[i])->value);
-    ITERTYPE t = dynamic_cast<TypeN*>(types[i])->type; 
+    string vid = string(dynamic_cast<IdN*>(ids[i])->value); 
+    TypeN* type = dynamic_cast<TypeN*>(types[i]); 
+    ITERTYPE t = type->type; 
+    int s = type->size; 
+
     bool res; 
     if(global == true)
-      res = globaltab->insert(vid, t); 
+      res = globaltab->insert(vid, t, s); 
     else 
-      res = table->insert(vid, t); 
+      res = table->insert(vid, t, s); 
+
     if(res == false){
       cout << SE << vid << " is duplicate fail to delcaration" << endl; 
+      return false; 
     }
   }
+  return true; 
 } 
 
 void VarDecB::print(int space){
@@ -270,10 +282,8 @@ list<string> VarDecB::codeGen(SymTab* table){
     string vid = string(dynamic_cast<IdN*>(ids[0])->value); 
     int offset = table->lookupOffset(vid); 
 
-    if(types[0]->calcType(table) == STRING){
+    if(types[0]->calcType(table) == CHAR){
       int size = code.size(); 
-      if(size > 10) 
-        size = 10;
       for(int i = 0; i < size; i++){
         code.push_back("str " + to_string(offset + size - i)); 
       } 
@@ -302,15 +312,23 @@ void IfB::print(int space){
   printBlockList(elseStmts); 
 }
 
-void IfB::addSymbol(SymTab* tab, SymTab* globaltab){
+bool IfB::addSymbol(SymTab* tab, SymTab* globaltab){
+  bool result = true; 
   for(int i = 0; i < ifStmts.size(); i++){
-    ifStmts[i]->addSymbol(tab, globaltab); 
+    result = ifStmts[i]->addSymbol(tab, globaltab); 
+    if(result == false)
+      break; 
   }
-  for(int i = 0; i < elseStmts.size(); i++){
-    elseStmts[i]->addSymbol(tab, globaltab); 
-  }
-}
+  if(result == false) 
+    return result; 
 
+  for(int i = 0; i < elseStmts.size(); i++){
+    result = elseStmts[i]->addSymbol(tab, globaltab); 
+    if(result == false)
+      break; 
+  }
+  return result; 
+}
 
 bool IfB::checkType(SymTab* table){
   if(condition->calcType(table) != BOOL) {
@@ -331,8 +349,8 @@ list<string> IfB::codeGen(SymTab* table){
   ifSection = codeSection; 
   codeSection++; 
 
-  //fi statement
-  for(int i = 0; i < ifStmts.size(); i++){
+  //if statement
+  for(int i = ifStmts.size() - 1; i >= 0; i--){
     list<string> addr = ifStmts[i]->codeGen(table); 
     code.insert(code.end(), addr.begin(), addr.end()); 
   }
@@ -341,14 +359,14 @@ list<string> IfB::codeGen(SymTab* table){
   codeSection++; 
 
   //else statement 
-  code.push_back("L"+ to_string(ifSection) + ": ldc 0"); 
-  for(int i = 0; i < elseStmts.size(); i++){
+  code.push_back("L"+ to_string(ifSection) + ":"); 
+  for(int i = elseStmts.size()-1; i >= 0; i--){
     list<string> addr = elseStmts[i]->codeGen(table); 
     code.insert(code.end(), addr.begin(), addr.end()); 
   }
 
   //continue statment 
-  code.push_back("L"+ to_string(continueSection) + ": ldc 0"); 
+  code.push_back("L"+ to_string(continueSection) + ":"); 
   return code; 
 } 
 
@@ -365,10 +383,14 @@ void WhileB::print(int space){
   printBlockList(stmts); 
 }
 
-void WhileB::addSymbol(SymTab* tab, SymTab* globaltab){
+bool WhileB::addSymbol(SymTab* tab, SymTab* globaltab){
+  bool result = true; 
   for(int i = 0; i < stmts.size(); i++){
-    stmts[i]->addSymbol(tab, globaltab); 
+    result = stmts[i]->addSymbol(tab, globaltab); 
+    if(result == false)
+      break; 
   }
+  return result; 
 }
 
 bool WhileB::checkType(SymTab* table){
@@ -387,7 +409,7 @@ list<string> WhileB::codeGen(SymTab* table){
   continueSection = codeSection++; 
 
   //condition Section
-  code.push_back("L"+ to_string(conditionSection) + ": ldc 0"); 
+  code.push_back("L"+ to_string(conditionSection) + ":"); 
   list<string> conCode = condition->calcCode(table); 
   code.splice(code.end(), conCode); 
   code.push_back("fjp L" + to_string(continueSection)); 
@@ -398,7 +420,7 @@ list<string> WhileB::codeGen(SymTab* table){
     code.splice(code.end(), addr); 
   }
   code.push_back("ujp L" + to_string(conditionSection)); 
-  code.push_back("L"+ to_string(continueSection) + ": ldc 0"); 
+  code.push_back("L"+ to_string(continueSection) + ":"); 
   return code; 
 } 
 
@@ -417,21 +439,26 @@ void CmdB::print(int space){
 list<string> CmdB::codeGen(SymTab* table){
   list<string> code; 
   CMDTYPE ctype = dynamic_cast<CmdN*>(cmd)->type; 
+  ITERTYPE t = other->calcType(table); 
 
   
   if(ctype == READ){
-
+    if(t == INT){
+      code.push_back("in"); 
+    }
+    else if(t == CHAR){
+      /*TODO*/ 
+    }
   }
 
   if(ctype == WRITE){
     list<string> getValue = other->calcCode(table);
     code.insert(code.begin(), getValue.begin(), getValue.end());  
     
-    ITERTYPE t = other->calcType(table); 
     if(t == INT){
       code.push_back("out"); 
     }
-    else if (t == STRING){
+    else if (t == CHAR){
       for(int i = 0; i < getValue.size(); i++){
         code.push_back("outc"); 
       }

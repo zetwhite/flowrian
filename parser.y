@@ -14,6 +14,7 @@
               #endif
        }
        int lineno = 1; 
+       int funcno = 1; 
        vector<Block*> program; 
 %}	
 %code requires { #include "ast/node.hpp" }
@@ -36,12 +37,12 @@
 %type <blocks> Funcs Stmts 
 
 
-%token _IF _ELSE _WHILE _START _END _OPAREN _CPAREN _OCURLY _CCURLY _SEMI _COLONS _COMMA _ASS 
+%token _IF _ELSE _WHILE _START _END _OPAREN _CPAREN _OCURLY _CCURLY _OBRACK _CBRACK _SEMI _COLONS _COMMA _ASS 
 %token _GLOBAL _DELETE
 %token _AT _TOLEFT _TORIGHT
 %token _PLUS _MINUS _TIMES _MOD _DIV 
 %token _GT _LT _GE _LE _EQ _NEQ 
-%token _INT _BOOL _STRING _VOID 
+%token _INT _BOOL _CHAR _VOID 
 %token _TRUE _FALSE
 
 %right _ELSE 
@@ -56,7 +57,7 @@ Funcs  : StDecFunc Funcs    { dbg("declare function!\n"); program.push_back($1);
        ; 
 
 StDecFunc : _FUNCID _COLONS TypeList _TORIGHT Type FuncBody
-              { dbg("function declaration part\n"); $$ = new FuncDecB($1, $3, $5, dynamic_cast<FuncBodyB*>($6));}
+              { dbg("function declaration part\n"); $$ = new FuncDecB($1, funcno++, $3, $5, dynamic_cast<FuncBodyB*>($6));}
        ; 
 
 FuncBody : _OPAREN _START FuncArg _SEMI Stmts _END FuncRet _SEMI _CPAREN
@@ -146,7 +147,7 @@ IFactor : _MINUS Number            { dbg("unary minus\n");  $$ = new OpN(UMINUS,
        ;
 
 Number  : Id                       { dbg("find id\n");            $$ = $1; }
-       | _LITERAL                  { dbg("this is stirng \n");    $$ = new IteralN(STRING, $1, lineno);  }
+       | _LITERAL                  { dbg("this is stirng \n");    $$ = new IteralN(CHAR, $1, lineno);  }
        | _NUMBER                   { dbg("find number\n");        $$ = new IteralN(INT, $1, lineno); } 
        | _OPAREN Exp _CPAREN       { dbg("into parentheses\n");   $$ = $2; }
        ;
@@ -166,10 +167,13 @@ ExpList : ExpList _COMMA Exp       { $1->push_back($3); $$ = $1; }
 Id     : _VARID      { dbg($1); $$ = new IdN(VARID, $1, lineno); }
        ; 
 
-Type   : _INT        { dbg("find var int \n");       $$ = new TypeN(INT, lineno); }
-       | _BOOL      { dbg("find var flaot \n");     $$ = new TypeN(BOOL, lineno); }
-       | _STRING     { dbg("find var string \n");    $$ = new TypeN(STRING, lineno); }
-       | _VOID       { dbg("find var void \n");      $$ = new TypeN(VOID, lineno); } 
+Type   : _INT        { dbg("find var int \n");       $$ = new TypeN(INT, lineno, 1); }
+       | _BOOL       { dbg("find var bool \n");      $$ = new TypeN(BOOL, lineno, 1); }
+       | _CHAR       { dbg("find var char \n");      $$ = new TypeN(CHAR, lineno, 1); }
+       | _VOID       { dbg("find var void \n");      $$ = new TypeN(VOID, lineno, 1); }
+       | _INT _OBRACK _NUMBER _CBRACK { dbg("find int array\n");       $$ = new TypeN(INT, lineno, $3); }
+       | _BOOL _OBRACK _NUMBER _CBRACK { dbg("find bool array\n");     $$ = new TypeN(BOOL, lineno, $3); }
+       | _CHAR _OBRACK _NUMBER _CBRACK { dbg("find char array\n");     $$ = new TypeN(CHAR, lineno, $3); }
        ; 
 %%
 

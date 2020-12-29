@@ -12,7 +12,7 @@ using namespace std;
 class Block{
 public : 
   virtual void print(int space = 0); 
-  virtual void addSymbol(SymTab* table, SymTab* globaltable); 
+  virtual bool addSymbol(SymTab* table, SymTab* globaltable); 
   virtual bool checkType(SymTab* table);
   virtual list<string> codeGen(SymTab* table); 
 }; 
@@ -25,7 +25,7 @@ public:
 
   FuncBodyB(vector<Node*>* s, Node* e, vector<Block*>* st);
   bool checkType(SymTab* table);  
-  void addSymbol(SymTab* table, SymTab* globaltable);  
+  bool addSymbol(SymTab* table, SymTab* globaltable);  
   list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
@@ -34,13 +34,14 @@ public:
 class FuncDecB : public Block{
 public:
   char* id; 
+  int functionNumber; 
   vector<Node*> inTypes; 
   Node* outType; 
   FuncBodyB* body;
 
-  FuncDecB(char* i, vector<Node*>* in, Node* out, FuncBodyB* fb); 
+  FuncDecB(char* i, int fid, vector<Node*>* in, Node* out, FuncBodyB* fb); 
   bool checkType(SymTab* table); 
-  void addSymbol(SymTab* table, SymTab* globaltable); 
+  bool addSymbol(SymTab* table, SymTab* globaltable); 
   list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 
@@ -59,7 +60,7 @@ public:
   VarDecB(Node* i, Node* t, Node* e, bool g = false); 
   void setGlobal(); 
   bool checkType(SymTab* table); 
-  void addSymbol(SymTab* table, SymTab* globaltable); 
+  bool addSymbol(SymTab* table, SymTab* globaltable); 
   list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
@@ -72,7 +73,7 @@ public:
 
   IfB(Node* c, vector<Block*>* i, vector<Block*>* e = nullptr); 
   bool checkType(SymTab* table); 
-  void addSymbol(SymTab* table, SymTab* globaltable); 
+  bool addSymbol(SymTab* table, SymTab* globaltable); 
   list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 
@@ -85,7 +86,7 @@ public:
 
   WhileB(Node* c, vector<Block*>* s); 
   bool checkType(SymTab* table); 
-  void addSymbol(SymTab* table, SymTab* globaltable); 
+  bool addSymbol(SymTab* table, SymTab* globaltable); 
   list<string> codeGen(SymTab* table); 
   void print(int space = 0); 
 }; 

@@ -3,6 +3,7 @@
 
 #include <iostream> 
 #include <map> 
+#include <iomanip> 
 #include "symnode.hpp"
 
 #define ERR_OFFSET -200 
@@ -11,12 +12,14 @@ using namespace std;
 
 class SymTab{
 public : 
+  int roffset; 
   int offset; 
   string functionId; 
   map<string, SymNode> table; 
   
   SymTab(string fid); 
-  bool insert(string vid, ITERTYPE t);
+  bool insert(string vid, ITERTYPE t, int size = 1);
+  bool insertReverse(string vid, ITERTYPE t, int size = 1); 
   ITERTYPE lookupType(string vid); 
   int lookupOffset(string vid); 
   int lookupSize(string vid); 

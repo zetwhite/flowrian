@@ -7,6 +7,10 @@
     "tuple": "cpp",
     "type_traits": "cpp",
     "utility": "cpp",
-    "iostream": "cpp"
+    "iostream": "cpp",
+    "iomanip": "cpp",
+    "iosfwd": "cpp",
+    "optional": "cpp",
+    "system_error": "cpp"
   }
 }

@@ -1,8 +1,0 @@
-#main::void->integer(
-  start; 
-
-  $a :: string = "good"; 
-  @ <- $a; 
-  @ <- "good"; 
-  end 1; 
-)

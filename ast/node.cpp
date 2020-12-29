@@ -6,6 +6,9 @@ extern vector<Block*> program;
 
 const string TE = "[TYPE ERROR] "; 
 const string SE = "[SYNTAX ERROR] "; 
+const string LINE(int line){
+  return " at LINE " + to_string(line); 
+}
 
 string toString(NTYPE type){
   switch(type){
@@ -70,7 +73,7 @@ ITERTYPE OpN::calcType(SymTab* table){
   //check unary operation
   if(type == UPLUS || type == UMINUS){
     if( son.size() <= 0){
-      cout << SE << "unary operatoin operand error at LINE " << lineno << endl; 
+      cout << SE << "unary operatoin operand error" << LINE(lineno)  << endl; 
       return INVALID; 
     }
     if( son[0]->calcType(table) == INT){
@@ -80,13 +83,13 @@ ITERTYPE OpN::calcType(SymTab* table){
   
   if(son.size() != 2){
     cout << "son size : " << son.size() << endl; 
-    cout << SE << "unary operatoin operand error at LINE " << lineno << endl; 
+    cout << SE << "unary operatoin operand error" << LINE(lineno)  << endl;  
     return INVALID; 
   }
   ITERTYPE t1 = son[0]->calcType(table); 
   ITERTYPE t2 = son[1]->calcType(table); 
   if( t1 != t2 ){
-    cout << TE <<"operand type is not same at LINE " << lineno << endl; 
+    cout << TE <<"operand type is not same"  << LINE(lineno)  << endl; 
     return INVALID; 
   }
   if( t1 == INT ){
@@ -97,11 +100,11 @@ ITERTYPE OpN::calcType(SymTab* table){
   }
   if( t1 == BOOL ){
     if(!(type == EQ || type == NEQ))
-      cout << TE <<"operand type must be bool or number at LINE " << lineno << endl; 
+      cout << TE <<"operand type must be bool or number" << LINE(lineno)  << endl;  
     else
       return BOOL; 
   }
-  cout << TE << "operand type must be bool or number at LINE " << lineno << endl; 
+  cout << TE << "operand type must be bool or number"  << LINE(lineno)  << endl;  
   return INVALID; 
 }
 
@@ -153,23 +156,35 @@ void IdN::print(){
   Node::print();
 }
 
+FuncDecB* findFunction(string functionId){
+  FuncDecB* funcP = nullptr; 
+  for(int i = 0; i < program.size(); i++){
+    FuncDecB* tmpP = dynamic_cast<FuncDecB*>(program[i]); 
+    if(tmpP->id == functionId){
+      funcP = tmpP; 
+      break; 
+    }
+  }
+  return funcP; 
+}
+
 ITERTYPE IdN::calcType(SymTab* table){
   if(type == VARID){
     ITERTYPE t = table->lookupType(string(value));
     if(t == INVALID){
       t = globalTable.lookupType(string(value)); 
+    if(t == INVALID)
+      cout << SE << string(value) << " is undefined " << LINE(lineno) << endl; 
     }
     return t; 
   } 
   if(type == FUNCID){
+
     //search function in list 
-    FuncDecB* funcP = nullptr; 
-    for(int i = 0; i < program.size(); i++){
-      FuncDecB* tmpP = dynamic_cast<FuncDecB*>(program[i]); 
-      if(strcmp(tmpP->id, value) == 0 ){
-        funcP = tmpP; 
-        break; 
-      }
+    FuncDecB* funcP = findFunction(string(value)); 
+    if(funcP == nullptr){
+      cout << SE << string(value) << " is undefined"  << LINE(lineno)  << endl; 
+      return INVALID; 
     }
 
     //check argument type 
@@ -177,12 +192,12 @@ ITERTYPE IdN::calcType(SymTab* table){
     int argSize = funcP->inTypes.size(); 
     int pasSize = son.size(); 
     if(argSize != pasSize){
-      cout << SE << "calling function(" << string(value) << ") argument count is differ, at LINE " << lineno << endl; 
+      cout << SE << "calling function(" << string(value) << ") argument count is differ"  << LINE(lineno)  << endl; 
       return INVALID; 
     }
-    for(int i = 0; i < argSize; i++){
+    for(int i = 0; i < argSize; i++){ 
       if(funcP->inTypes[i]->calcType(table) != son[i]->calcType(table)){
-        cout << TE << "calling function(" << string(value) << ") argument type is differ, at LINE" << lineno << endl;  
+        cout << TE << "calling function(" << string(value) << ") argument type is differ"  << LINE(lineno)  << endl; 
         return INVALID; 
       }
     }
@@ -203,12 +218,25 @@ list<string> IdN::calcCode(SymTab* table){
     }
   }
 
+  else if(type == FUNCID){
+    FuncDecB* funcP = findFunction(string(value));
+    int argSize = son.size(); //ready argument 
+    int functionNumber = funcP->functionNumber; 
+    code.push_back("mst");
+    for(int i = 0; i < argSize; i++){
+    list<string> addr = son[i]->calcCode(table); 
+    code.insert(code.end(),addr.begin(), addr.end()); 
+    }
+    code.push_back("cup " + to_string(argSize) + " F" + to_string(functionNumber) );   
+  }
+
   return code; 
 }  
 
 //==============================================
 
-TypeN::TypeN(ITERTYPE t, int l):Node(l){
+TypeN::TypeN(ITERTYPE t, int l, int s):Node(l){
+  size = s; 
   type = t; 
 }
 
@@ -253,8 +281,8 @@ list<string> IteralN::calcCode(SymTab* table){
   if(type == INT){
     code.push_back("ldc " + to_string(ival)); 
   }
-  else if(type == STRING){
-    int slen = strlen(sval);
+  else if(type == CHAR){
+    int slen = strlen(sval); 
     for(int i = slen - 2; i >= 1; i--){
       code.push_back("ldc '" + string(1, sval[i]) + "'" ); 
     }

@@ -6,10 +6,10 @@
 
 #main :: void -> integer (
   start ;
-  $greeting::string = "hello flowrian"; 
+  $greeting::char[20] = "helloFlowrian"; 
   @ <- $greeting; 
   $sum :: integer; 
-  $sum = #add 3, "god"; 
-  -- @ <- $sum;  
+  $sum = #add 3, 4; 
+  @ <- $sum;  
   end 1; 
 )

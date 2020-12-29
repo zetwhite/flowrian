@@ -1,0 +1,25 @@
+
+
+#getFibo::integer->integer(
+  start $number; 
+
+  $result::integer; 
+  if($number <= 1){
+    $result = $number; 
+  }
+  else{
+    $result = (#getFibo ($number - 1)) + (#getFibo ($number - 2)); 
+  }
+
+  end $result; 
+)
+
+#main::void->void(
+  start; 
+  
+  $number::integer = 6; 
+  @ <- "FiboOf6Is"; 
+  @ <- #getFibo $number; 
+
+  end; 
+)

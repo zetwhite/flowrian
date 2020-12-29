@@ -3,15 +3,25 @@
 
 SymTab::SymTab(string fid){
   functionId = fid; 
-  offset = 0; 
+  offset = 3; 
+  roffset = -1; 
 }
 
-bool SymTab::insert(string vid, ITERTYPE t){
-  SymNode record(t, offset); 
+bool SymTab::insert(string vid, ITERTYPE t, int size){
+  SymNode record(t, offset, size); 
   auto ret = table.insert({vid, record}); 
     
   if( ret.second ) { //insert success 
     offset += record.size; 
+  }
+  return ret.second; 
+}
+
+bool SymTab::insertReverse(string vid, ITERTYPE t, int size){
+  SymNode record(t, roffset, size);
+  auto ret = table.insert({vid, record});  
+  if( ret.second) {
+    roffset -= record.size; 
   }
   return ret.second; 
 }
@@ -36,18 +46,19 @@ int SymTab::lookupOffset(string vid){
 int SymTab::lookupSize(string vid){
   auto iter = table.find(vid); 
   if(iter == table.end())
-    return ERR_SIZE; 
+    return ERR_SIZE;
   else
     return iter->second.size; 
 }
 
 
 void SymTab::print(){
-  cout << "=== [[ symbol table of (" << functionId << ") ]] ===" << endl; 
-  cout << "id \t\t type \t\toffset \t\tsize" << endl; 
+  const int idx = 15; 
+  cout << "===== [[ symbol table of (" << functionId << ") ]] =====" << endl; 
+  cout << left << setw(idx) << "id" << setw(idx) << "type" << setw(idx) << "offset" << setw(idx) << "size" << endl; 
   auto iter = table.begin(); 
   for(iter=table.begin(); iter != table.end(); iter++){
-    cout << iter->first << "\t\t"; 
+    cout << left << setw(idx) <<  iter->first; 
     iter->second.print(); 
     cout << endl; 
   }

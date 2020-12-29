@@ -32,6 +32,8 @@ literal 	\"([^\\\"]|\\.)*\"
 ")" 		{ return _CPAREN; }
 "{"			{ return _OCURLY; }
 "}" 		{ return _CCURLY; }
+"["			{ return _OBRACK; }
+"]"			{ return _CBRACK; }
 "@"			{ return _AT; }
 "->"		{ return _TORIGHT; }
 "<-"		{ return _TOLEFT; }
@@ -53,7 +55,7 @@ literal 	\"([^\\\"]|\\.)*\"
 
 "integer" { return _INT; }
 "bool"		{ return _BOOL; }
-"string"	{ return _STRING; }
+"char"		{ return _CHAR; }
 "void"		{ return _VOID; }
 "true"		{ return _TRUE; }
 "false"		{ return _FALSE; }

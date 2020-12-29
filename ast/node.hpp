@@ -57,8 +57,9 @@ public:
 class TypeN : public Node{
 public: 
   ITERTYPE type;
+  int size; 
 
-  TypeN(ITERTYPE t, int l); 
+  TypeN(ITERTYPE t, int l, int size); 
   ITERTYPE calcType(SymTab* table); 
   void print(); 
 }; 

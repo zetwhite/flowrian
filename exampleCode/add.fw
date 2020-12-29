@@ -1,0 +1,17 @@
+#add::integer, integer -> integer (
+	 	start $a, $b;
+		$c::integer = $a + $b; 
+		end $c;
+)
+
+#main::void -> integer (
+	start; 
+	$a::integer = 1; 
+	$b::integer = 2; 
+  $c::integer = #add $a, $b;
+	@ <- "add"; 
+	@ <- $c;  
+
+	end 0; 
+
+)

@@ -34,7 +34,7 @@ symnode.o : symtab/symnode.cpp symtab/symnode.hpp
 symtab.o : symtab/symtab.cpp symtab/symtab.hpp symtab/symnode.hpp symtab/symnode.cpp 
 	$(CC) $(CFLAGS) -o $@ $< 
 
-main.o : main.cpp node.o block.o parser.o scanner.o symnode.o symtab.o global.o
+main.o : main.cpp node.o block.o parser.o scanner.o symnode.o symtab.o global.o option.hpp
 	$(CC) $(CFLAGS) -o $@ main.cpp
 
 clean :

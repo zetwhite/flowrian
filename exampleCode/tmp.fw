@@ -1,8 +1,0 @@
-#main::void->integer(
-  start; 
-
-  $a :: integer; 
-  $a = "stringstring"; 
-
-  end 1; 
-)

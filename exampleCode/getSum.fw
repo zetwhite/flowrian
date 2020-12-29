@@ -1,0 +1,30 @@
+#getSum::integer, integer->integer(
+  start $begin, $end; 
+
+  $i::integer = $begin; 
+  $sum :: integer = 0; 
+  while($i < $end){
+    $sum = $sum + $i; 
+    $i = $i + 1; 
+  }
+
+  end $sum; 
+)
+
+
+#main::void->void(
+  start; 
+  
+  $begin :: integer = 1; 
+  $end :: integer = 5; 
+  $sum :: integer = #getSum $begin,$end; 
+
+  @ <- "SumFrom"; 
+  @ <- $begin; 
+  @ <- "To"; 
+  @ <- $end;  
+  @ <- "Is"; 
+  @ <- $sum; 
+
+  end; 
+)
