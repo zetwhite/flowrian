@@ -1,5 +1,3 @@
-
-
 #getFibo::integer->integer(
   start $number; 
 

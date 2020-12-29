@@ -21,7 +21,7 @@ static void showUsage(string programName){
 
 void parseInput(int argc, char* argv[], string& outFile, string& inFile,  bool& showSymbol, bool& showFunction){
     char option; 
-    const char* optstring = "fto:h:"; 
+    const char* optstring = "hfto:"; 
     optind = 1; 
     while(-1 != (option = getopt(argc, argv, optstring))) {
         switch(option){
@@ -29,7 +29,7 @@ void parseInput(int argc, char* argv[], string& outFile, string& inFile,  bool& 
                 showUsage(argv[0]); 
                 exit(0); 
             case 'o':
-                outFile = string(optarg); 
+                outFile = string(argv[optind-1]); 
                 break; 
             case 't' : 
                 showSymbol = true; 
